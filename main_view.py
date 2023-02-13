@@ -1,4 +1,5 @@
 from tkinter import Tk, Button, Canvas, CENTER
+from FrameNetwork import FrameNetwork
 
 
 class MainView:
@@ -11,21 +12,9 @@ class MainView:
 
         self.paint_canvas()
 
-        add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
-                                  command=self.add_frame_button_on_click)
-        add_frame_button.place(relx=0.5, rely=0.73, anchor=CENTER)
+        self.add_screen_elements()
 
-        add_frame_button = Button(self.window, text="Gerar quadros para todos os pares", height=5, width=40,
-                                  command=self.add_frame_button_on_click)
-        add_frame_button.place(relx=0.5, rely=0.85, anchor=CENTER)
-
-        add_frame_button = Button(self.window, text="<", height=5, width=5,
-                                  command=self.add_frame_button_on_click)
-        add_frame_button.place(relx=0.3, rely=0.80, anchor=CENTER)
-
-        add_frame_button = Button(self.window, text=">", height=5, width=5,
-                                  command=self.add_frame_button_on_click)
-        add_frame_button.place(relx=0.7, rely=0.80, anchor=CENTER)
+        self.build_network()
 
     def paint_canvas(self):
         canvas = Canvas(self.window, bg='lightgray', height=self.height, width=self.width)
@@ -35,7 +24,38 @@ class MainView:
         canvas.create_rectangle(482, 300, 797, 450)
         canvas.create_rectangle(865, 150, 1180, 300)
 
+    def add_screen_elements(self):
+        add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
+                                  command=self.add_frame_button_on_click)
+        add_frame_button.place(relx=0.5, rely=0.73, anchor=CENTER)
+
+        add_all_frames_button = Button(self.window, text="Gerar quadros para todos os pares", height=5, width=40,
+                                       command=self.add_all_frames_button_on_click)
+        add_all_frames_button.place(relx=0.5, rely=0.85, anchor=CENTER)
+
+        move_left_button = Button(self.window, text="<", height=5, width=5,
+                                  command=self.move_left_button_on_click)
+        move_left_button.place(relx=0.3, rely=0.80, anchor=CENTER)
+
+        move_right_button = Button(self.window, text=">", height=5, width=5,
+                                   command=self.move_right_button_on_click)
+        move_right_button.place(relx=0.7, rely=0.80, anchor=CENTER)
+
+    def build_network(self):
+        self.frame_network = FrameNetwork()
+
+        self.frame_network.load_weights("weights\\douga-keras-pix2pix-anime-optimizes-testbed-4200-all2.h5")
+
     def add_frame_button_on_click(self):
+        self.frame_network.generator.predict()
+
+    def add_all_frames_button_on_click(self):
+        pass
+
+    def move_left_button_on_click(self):
+        pass
+
+    def move_right_button_on_click(self):
         pass
 
     def open(self):

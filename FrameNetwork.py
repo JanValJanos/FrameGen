@@ -1,14 +1,14 @@
 from __future__ import print_function, division
+from DataLoader import DataLoader
 import scipy
 
-from keras.datasets import mnist
 # from keras_contrib.layers.normalization.instancenormalization import InstanceNormalization
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate
-from keras.layers import BatchNormalization, Activation, ZeroPadding2D
-from keras.layers.advanced_activations import LeakyReLU
+from tensorflow.keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate
+from tensorflow.keras.layers import BatchNormalization, Activation, ZeroPadding2D
+from keras.layers import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
-from keras.models import Sequential, Model
-from keras import backend as K
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import mean_squared_error, mean_absolute_error
 import tensorflow as tf
@@ -26,7 +26,7 @@ def tf_distance_transform(image):
     return y
 
 
-class FrameNetwork():
+class FrameNetwork:
     def __init__(self):
         # Input shape
         self.img_rows = 256
@@ -37,8 +37,8 @@ class FrameNetwork():
 
         # Configure data loader
         self.dataset_name = 'facades'
-        self.data_loader = AsdDataLoader(dataset_name=self.dataset_name,
-                                         img_res=(self.img_rows, self.img_cols))
+        self.data_loader = DataLoader(dataset_name=self.dataset_name,
+                                      img_res=(self.img_rows, self.img_cols))
 
         # Calculate output shape of D (PatchGAN)
         patch = int(self.img_rows / 2 ** 4)
