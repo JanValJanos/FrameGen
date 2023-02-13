@@ -44,7 +44,7 @@ class MainView:
     def build_network(self):
         self.frame_network = FrameNetwork()
 
-        self.frame_network.load_weights("weights\\douga-keras-pix2pix-anime-optimizes-testbed-4200-all2.h5")
+        self.frame_network.load_weights("E:\\GianAwesome\\Facultade\\outside_drive\\douga-keras-pix2pix-anime-optimizes-testbed-2400-atd12k-3.h5")
 
     def add_frame_button_on_click(self):
         self.frame_network.generator.predict()

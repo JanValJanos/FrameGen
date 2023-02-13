@@ -26,19 +26,19 @@ def tf_distance_transform(image):
     return y
 
 
-class FrameNetwork:
+class FrameNetwork():
     def __init__(self):
         # Input shape
         self.img_rows = 256
         self.img_cols = 256
         self.channels = 1
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
-        self.flow_shape = (self.img_rows, self.img_cols, 2)
 
         # Configure data loader
         self.dataset_name = 'facades'
-        self.data_loader = DataLoader(dataset_name=self.dataset_name,
-                                      img_res=(self.img_rows, self.img_cols))
+        # Comentando pois não precisa treinar aqui
+        #self.data_loader = AsdDataLoader(dataset_name=self.dataset_name,
+        #                                 img_res=(self.img_rows, self.img_cols))
 
         # Calculate output shape of D (PatchGAN)
         patch = int(self.img_rows / 2 ** 4)
@@ -70,18 +70,16 @@ class FrameNetwork:
         img_B = Input(shape=self.img_shape)
         img_C = Input(shape=self.img_shape)
 
-        flow = Input(shape=self.flow_shape)
-
         # By conditioning on A and C generate a fake version of B
-        fake_B = self.generator([img_A, img_C, flow])
+        fake_B = self.generator([img_A, img_C])
 
         # For the combined model we will only train the generator
         self.discriminator.trainable = False
 
         # Discriminators determines validity of translated images / condition pairs
-        valid = self.discriminator([img_A, fake_B, img_C, flow])
+        valid = self.discriminator([img_A, fake_B, img_C])
 
-        self.combined = Model(inputs=[img_A, img_B, img_C, flow], outputs=[valid, fake_B])
+        self.combined = Model(inputs=[img_A, img_B, img_C], outputs=[valid, fake_B])
         self.combined.compile(loss=['binary_crossentropy', 'mae'],  # 'mse'],#'mae'],
                               loss_weights=[1, 100],
                               optimizer=optimizer)
@@ -127,10 +125,8 @@ class FrameNetwork:
         img_A = Input(shape=self.img_shape)
         img_C = Input(shape=self.img_shape)
 
-        flow = Input(shape=self.flow_shape)
-
         # Concatenate conditioning images
-        combined_imgs = Concatenate(axis=-1)([img_A, img_C, flow])
+        combined_imgs = Concatenate(axis=-1)([img_A, img_C])
 
         # Downsampling
         d1 = conv2d(combined_imgs, self.gf, bn=False)
@@ -152,7 +148,7 @@ class FrameNetwork:
         u7 = UpSampling2D(size=2)(u6)
         output_img = Conv2D(self.channels, kernel_size=4, strides=1, padding='same', activation='tanh')(u7)
 
-        return Model([img_A, img_C, flow], output_img)
+        return Model([img_A, img_C], output_img)
 
     def build_discriminator(self):
 
@@ -168,10 +164,8 @@ class FrameNetwork:
         img_B = Input(shape=self.img_shape)
         img_C = Input(shape=self.img_shape)
 
-        flow = Input(shape=self.flow_shape)
-
         # Concatenate image and conditioning image by channels to produce input
-        combined_imgs = Concatenate(axis=-1)([img_A, img_B, img_C, flow])
+        combined_imgs = Concatenate(axis=-1)([img_A, img_B, img_C])
 
         d1 = d_layer(combined_imgs, self.df, bn=False)
         d2 = d_layer(d1, self.df * 2)
@@ -182,9 +176,9 @@ class FrameNetwork:
         validity = Conv2D(1, kernel_size=4, strides=1, padding='same')(d5)
         activation = Activation('sigmoid')(validity)
 
-        return Model([img_A, img_B, img_C, flow], activation)
+        return Model([img_A, img_B, img_C], activation)
 
-    def train(self, epochs, batch_size=1, sample_interval=50):
+    def train(self, epochs, batch_size=1, sample_interval=50, patience=5, early_stopping=False):
 
         start_time = datetime.datetime.now()
 
@@ -193,17 +187,18 @@ class FrameNetwork:
         fake = np.zeros((batch_size,) + self.disc_patch)
 
         losses = {}
+        remaining_patience = patience
 
         for epoch in range(epochs):
-            for batch_i, (imgs_A, imgs_B, imgs_C, flow13) in enumerate(
-                    self.data_loader.load_batch(batch_size, augment=True)):
+            epoch_losses = []
+            for batch_i, (imgs_A, imgs_B, imgs_C) in enumerate(self.data_loader.load_batch(batch_size, augment=True)):
 
                 # ---------------------
                 #  Train Discriminator
                 # ---------------------
 
                 # Condition on B and generate a translated version
-                fake_B = self.generator.predict([imgs_A, imgs_C, flow13])
+                fake_B = self.generator.predict([imgs_A, imgs_C])
 
                 # Train the discriminators (original images = real / generated = Fake)
                 # d_loss_real_A = self.discriminator_douga.train_on_batch(imgs_A, valid)
@@ -215,8 +210,8 @@ class FrameNetwork:
 
                 # Train the discriminators (original images = real / generated = Fake)
                 if batch_i % 4 == 0:
-                    d_loss_real = self.discriminator.train_on_batch([imgs_A, imgs_B, imgs_C, flow13], valid)
-                    d_loss_fake = self.discriminator.train_on_batch([imgs_A, fake_B, imgs_C, flow13], fake)
+                    d_loss_real = self.discriminator.train_on_batch([imgs_A, imgs_B, imgs_C], valid)
+                    d_loss_fake = self.discriminator.train_on_batch([imgs_A, fake_B, imgs_C], fake)
                     d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
                     # if batch_i % 10 == 0:
@@ -230,7 +225,7 @@ class FrameNetwork:
                 # -----------------
 
                 # Train the generators
-                g_loss = self.combined.train_on_batch([imgs_A, imgs_B, imgs_C, flow13], [valid, imgs_B])
+                g_loss = self.combined.train_on_batch([imgs_A, imgs_B, imgs_C], [valid, imgs_B])
 
                 elapsed_time = datetime.datetime.now() - start_time
                 # Plot the progress
@@ -241,6 +236,8 @@ class FrameNetwork:
                                                                                                       100 * d_loss[1],
                                                                                                       g_loss[0],
                                                                                                       elapsed_time))
+
+                epoch_losses.append(g_loss[0])
 
                 ## Segundo treino na mesma epoch
                 # fake_B = self.generator.predict([imgs_C, imgs_Cd, imgs_A, imgs_Ad])
@@ -254,7 +251,16 @@ class FrameNetwork:
                 # if batch_i % sample_interval == 0:
                 #    self.sample_images(epoch, batch_i)
 
-            losses[epoch] = g_loss[0]
+            losses[epoch] = np.average(epoch_losses)
+
+            if len(losses) > 1 and early_stopping:
+                if losses[list(losses.keys())[-1]] > losses[list(losses.keys())[-2]]:
+                    remaining_patience -= 1
+                    print("Remaining patience: %d" % remaining_patience)
+                    if remaining_patience == 0:
+                        break
+                else:
+                    remaining_patience = patience
 
         return losses
 
