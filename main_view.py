@@ -1,9 +1,10 @@
-from tkinter import Tk, Button, Canvas, CENTER
+from tkinter import Tk, Button, Canvas, Menu, CENTER
 from FrameNetwork import FrameNetwork
 
 
 class MainView:
     def __init__(self):
+        self.frame_network = None
         self.width = 1280
         self.height = 720
         self.window = Tk()
@@ -13,6 +14,7 @@ class MainView:
         self.paint_canvas()
 
         self.add_screen_elements()
+        self.add_toolbar()
 
         self.build_network()
 
@@ -41,6 +43,14 @@ class MainView:
                                    command=self.move_right_button_on_click)
         move_right_button.place(relx=0.7, rely=0.80, anchor=CENTER)
 
+    def add_toolbar(self):
+        main_toolbar = Menu(self.window)
+        self.window.config(menu=main_toolbar)
+
+        importar_submenu = Menu(main_toolbar)
+        main_toolbar.add_cascade(label="Importar", menu=importar_submenu)
+        importar_submenu.add_command(label="Arquivos", command=self.importar_submenu_on_click)
+
     def build_network(self):
         self.frame_network = FrameNetwork()
 
@@ -56,6 +66,9 @@ class MainView:
         pass
 
     def move_right_button_on_click(self):
+        pass
+
+    def importar_submenu_on_click(self):
         pass
 
     def open(self):
