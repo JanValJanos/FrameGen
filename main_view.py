@@ -35,15 +35,16 @@ class MainView:
         self.build_network()
 
     def paint_canvas(self):
-        canvas = Canvas(self.window, bg='lightgray', height=self.height, width=self.width)
-        canvas.place(relx=0, rely=0)
+        #canvas = Canvas(self.window, bg='lightgray', height=self.height, width=self.width)
+        #canvas.place(relx=0, rely=0)
 
-        canvas.create_rectangle(100, 150, 405, 300)
-        canvas.create_rectangle(482, 300, 797, 450)
-        canvas.create_rectangle(865, 150, 1180, 300)
+        #canvas.create_rectangle(100, 150, 405, 300)
+        #canvas.create_rectangle(482, 300, 797, 450)
+        #canvas.create_rectangle(865, 150, 1180, 300)
 
         if self.loaded_frames is not None:
-            Label(self.window, image=self.loaded_frames[self.left_frame_index]).pack()
+            Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.3, rely=0.4, anchor=CENTER)
+            Label(self.window, image=self.loaded_frames[self.left_frame_index+1]).place(relx=0.7, rely=0.4, anchor=CENTER)
 
     def add_screen_elements(self):
         add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
@@ -87,7 +88,7 @@ class MainView:
             self.paint_canvas()
 
     def move_right_button_on_click(self):
-        if self.loaded_frames is not None and self.left_frame_index < len(self.loaded_frames) - 1:
+        if self.loaded_frames is not None and self.left_frame_index < len(self.loaded_frames) - 2:
             self.left_frame_index += 1
             self.paint_canvas()
 
