@@ -3,12 +3,12 @@ from FrameNetwork import FrameNetwork
 from DataLoader import DataLoader
 import os
 import cv2
+import numpy as np
 from PIL import Image, ImageTk
 
 
-def convert_cv2_image_to_imagepk(img):
-    im = Image.fromarray(img * 256)
-    #im.show()
+def convert_cv2_image_to_imagepk(img, flatten=False):
+    im = Image.fromarray(img)
     imgtk = ImageTk.PhotoImage(image=im)
 
     return imgtk
@@ -19,10 +19,12 @@ class MainView:
         self.frame_network = None
         self.data_loader = None
         self.loaded_frames = None
+        self.loaded_original_frames = None
+        self.interpolated_frame = None
         self.left_frame_index = 0
 
         self.width = 1280
-        self.height = 720
+        self.height = 900
         self.window = Tk()
         self.window.geometry(f"{self.width}x{self.height}")
         self.window.title("Gerador de quadros intermediários")
@@ -43,8 +45,11 @@ class MainView:
         #canvas.create_rectangle(865, 150, 1180, 300)
 
         if self.loaded_frames is not None:
-            Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.3, rely=0.4, anchor=CENTER)
-            Label(self.window, image=self.loaded_frames[self.left_frame_index+1]).place(relx=0.7, rely=0.4, anchor=CENTER)
+            Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2, anchor=CENTER)
+            Label(self.window, image=self.loaded_frames[self.left_frame_index+1]).place(relx=0.75, rely=0.2, anchor=CENTER)
+
+        if self.interpolated_frame is not None:
+            Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.5, anchor=CENTER)
 
     def add_screen_elements(self):
         add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
@@ -77,7 +82,18 @@ class MainView:
         self.frame_network.load_weights("E:\\GianAwesome\\Facultade\\outside_drive\\douga-keras-pix2pix-anime-optimizes-testbed-2400-atd12k-3.h5")
 
     def add_frame_button_on_click(self):
-        self.frame_network.generator.predict()
+        if self.loaded_original_frames is not None:
+#            gen = self.frame_network.generator.predict([[self.loaded_original_frames[self.left_frame_index]],
+#                                                       [self.loaded_original_frames[self.left_frame_index+1]]])
+            gen = self.frame_network.generator.predict([np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
+                                                        np.expand_dims(self.loaded_original_frames[self.left_frame_index+1], axis=0)])
+            gen = 256 * gen[0]
+            gen = np.squeeze(gen, axis=-1)
+
+            self.interpolated_frame = convert_cv2_image_to_imagepk(gen, flatten=True)
+
+            self.paint_canvas()
+
 
     def add_all_frames_button_on_click(self):
         pass
@@ -85,11 +101,13 @@ class MainView:
     def move_left_button_on_click(self):
         if self.loaded_frames is not None and self.left_frame_index > 0:
             self.left_frame_index -= 1
+            self.interpolated_frame = None
             self.paint_canvas()
 
     def move_right_button_on_click(self):
         if self.loaded_frames is not None and self.left_frame_index < len(self.loaded_frames) - 2:
             self.left_frame_index += 1
+            self.interpolated_frame = None
             self.paint_canvas()
 
     def importar_submenu_on_click(self):
@@ -104,17 +122,12 @@ class MainView:
             first_scene = scene
             break
 
-        imgs_A, imgs_B, imgs_C = self.data_loader.load_all_image_triplet(first_scene)
+        self.imgs_A, imgs_B, self.imgs_C = self.data_loader.load_all_image_triplet(first_scene)
 
-        #print(imgs_B.shape)
-        #cv2.imshow("image", imgs_B[0])
-        #cv2.waitkey(0)
-
-        self.loaded_frames = [convert_cv2_image_to_imagepk(img) for img in imgs_B]
+        self.loaded_original_frames = imgs_B
+        self.loaded_frames = [convert_cv2_image_to_imagepk(256 * img) for img in imgs_B]
 
         self.paint_canvas()
-
-        #fake_B = gan.generator.predict([imgs_A, imgs_C])
 
     def open(self):
         self.window.mainloop()
