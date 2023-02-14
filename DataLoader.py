@@ -7,23 +7,31 @@ from IPython.display import Image as iImage
 
 
 class DataLoader():
-    def __init__(self, dataset_name, img_res=(128, 128), root_dir="sketch_animated_by_scene_split",
-                 root_flow_dir="sketch_animated_by_scene_split_flow"):  # "shapes"):
+    def __init__(self, dataset_name, img_res=(128, 128), root_dir="sketch_animated_by_scene_split"):  # "shapes"):
         self.dataset_name = dataset_name
         self.img_res = img_res
         self.color_dir = 'original'
         self.sketch_dir = 'sketch'
         self.root_dir = root_dir
-        self.root_flow_dir = root_flow_dir
 
         dirs = []
-        for dir in sorted(os.listdir(self.root_flow_dir)):
-            dir_path = os.path.join(self.root_flow_dir, dir)
+        n_files = []
+        for dir in sorted(os.listdir(self.root_dir)):
+            dir_path = os.path.join(self.root_dir, dir)
             if not os.path.isfile(dir_path):
                 dirs.append(dir)
+                n_files.append(len([filename for filename in os.listdir(dir_path)]))
+
+        ### Para teste
+        ### Pegando apenas metade dos diretórios
+        # dirs = dirs[::8]
+        # n_files = n_files[::8]
+
+        n_files = np.asarray(n_files)
 
         self.scenes = dirs
-        self.count = len(dirs)
+        self.count = n_files.sum()
+        self.scene_weights = n_files / self.count
 
     def rotate_images(self, imgs):
         # Rotate
@@ -84,6 +92,31 @@ class DataLoader():
 
         return img_A, img_B, img_C
 
+    def load_halfway_image_triplet(self, src_dir, normalize=True, augment=False):
+
+        base_dir = os.path.join(self.root_dir, src_dir)
+
+        sampled_files = [filename for filename in sorted(os.listdir(base_dir))]
+
+        halfway = (len(sampled_files) - 2) // 2
+
+        images = []
+
+        for i in range(halfway, halfway + 3):
+            images.append(
+                self.load_image(os.path.join(base_dir, sampled_files[i]), normalize=normalize, grayscale=True))
+
+        if augment:
+            images = self.aug_flip(images)
+
+        im_set = [images]
+
+        img_A = np.vstack([np.expand_dims(triplet[0], axis=0) for triplet in im_set])
+        img_B = np.vstack([np.expand_dims(triplet[1], axis=0) for triplet in im_set])
+        img_C = np.vstack([np.expand_dims(triplet[2], axis=0) for triplet in im_set])
+
+        return img_A, img_B, img_C
+
     def load_image(self, filepath, normalize=True, grayscale=False):
         img = cv2.imread(filepath)
 
@@ -104,9 +137,21 @@ class DataLoader():
         if ids == None:
             sampled_scenes = random.choices(
                 population=self.scenes,
+                weights=self.scene_weights,
                 k=batch_size)
         else:
-            sampled_scenes = ids
+            scenes = []
+            weights = []
+
+            for scene, weight in zip(self.scenes, self.scene_weights):
+                if scene in ids:
+                    scenes.append(scene)
+                    weights.append(weight)
+
+            sampled_scenes = random.choices(
+                population=scenes,
+                weights=weights,
+                k=batch_size)
 
         img_batch = []
 
@@ -117,53 +162,25 @@ class DataLoader():
         img_B = np.vstack([np.expand_dims(triplet[1], axis=0) for triplet in img_batch])
         img_C = np.vstack([np.expand_dims(triplet[2], axis=0) for triplet in img_batch])
 
-        flow = np.vstack([np.expand_dims(triplet[3], axis=0) for triplet in img_batch])
-
-        return img_A, img_B, img_C, flow
+        return img_A, img_B, img_C
 
     def load_batch(self, batch_size, batches=20, augment=False):
         self.n_batches = batches
         for i in range(self.n_batches):
             yield self.load_data(batch_size, augment=augment)
 
-    def load_epoch(self, batch_size, augment=False):
+    def load_dataset(self, augment=False):
         random.shuffle(self.scenes)
-        for scene in scenes:
-            yield self.load_data(batch_size, ids=[scene], augment=augment)
 
-    def flow_loader(self, path, cropArea=None, resizeDim=None, frameFlip=0, shiftX=0, shiftY=0):
-        flow_np = np.load(path)
+        for scene in self.scenes:
+            img_batch = []
+            img_batch.append(self.load_image_triplet(scene, augment=augment))
 
-        res_np = np.zeros((2, resizeDim[1], resizeDim[0]))
+            img_A = np.vstack([np.expand_dims(triplet[0], axis=0) for triplet in img_batch])
+            img_B = np.vstack([np.expand_dims(triplet[1], axis=0) for triplet in img_batch])
+            img_C = np.vstack([np.expand_dims(triplet[2], axis=0) for triplet in img_batch])
 
-        res_np[0] = cv2.resize(flow_np[0], dsize=(resizeDim[1], resizeDim[0]), interpolation=cv2.INTER_NEAREST)
-        res_np[1] = cv2.resize(flow_np[1], dsize=(resizeDim[1], resizeDim[0]), interpolation=cv2.INTER_NEAREST)
-
-        flow_np = res_np
-
-        if resizeDim is not None:
-            factor0 = float(resizeDim[0]) / flow_np.shape[2]
-            factor1 = float(resizeDim[1]) / flow_np.shape[1]
-
-            flow_np[0, :, :] *= factor0
-            flow_np[1, :, :] *= factor1
-
-        if cropArea is not None:
-            flow_np = flow_np[:, cropArea[1]:cropArea[3], cropArea[0]:cropArea[2]]
-
-        flow_np[0] -= shiftX
-        flow_np[1] -= shiftY
-
-        if frameFlip:
-            flow_np = np.flip(flow_np, axes=2)  # torch.flip(flow, [2])
-            flow_np[0] *= -1
-
-        # (2, 256, 256) -> (256, 256, 2)
-        flow = np.transpose(flow, (1, 2, 0))
-
-        flow = K.constant(flow_np)
-
-        return flow
+            yield img_A, img_B, img_C
 
 
 def distance_transform(img):
