@@ -1,4 +1,4 @@
-from tkinter import Tk, Button, Canvas, Menu, CENTER
+from tkinter import Tk, Button, Canvas, Menu, CENTER, filedialog
 from FrameNetwork import FrameNetwork
 
 
@@ -69,7 +69,14 @@ class MainView:
         pass
 
     def importar_submenu_on_click(self):
-        pass
+        file_names = filedialog.askopenfilenames(initialdir="/",
+                                                 title="Escolha as imagens com os quadros",
+                                                 filetypes=(("Imagens",
+                                                        "*.png*"),
+                                                       ("all files",
+                                                        "*.*")))
+
+        print(file_names)
 
     def open(self):
         self.window.mainloop()
