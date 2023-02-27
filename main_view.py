@@ -1,4 +1,4 @@
-from tkinter import Tk, Button, Canvas, Menu, CENTER, filedialog, Label
+from tkinter import Tk, Button, Canvas, Menu, CENTER, filedialog, Label, messagebox
 from FrameNetwork import FrameNetwork
 from DataLoader import DataLoader
 import os
@@ -15,13 +15,15 @@ def convert_cv2_image_to_imagepk(img, flatten=False):
 
 
 class MainView:
-    def __init__(self):
+    def __init__(self, comparison_mode=True):
         self.frame_network = None
         self.data_loader = None
         self.loaded_frames = None
         self.loaded_original_frames = None
         self.interpolated_frame = None
         self.left_frame_index = 0
+
+        self.comparison_mode = comparison_mode
 
         self.width = 1280
         self.height = 900
@@ -46,10 +48,24 @@ class MainView:
 
         if self.loaded_frames is not None:
             Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2, anchor=CENTER)
-            Label(self.window, image=self.loaded_frames[self.left_frame_index+1]).place(relx=0.75, rely=0.2, anchor=CENTER)
+            if self.comparison_mode:
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.2,
+                                                                                              anchor=CENTER)
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.2,
+                                                                                              anchor=CENTER)
+            else:
+                Label(self.window, image=self.loaded_frames[self.left_frame_index+1]).place(relx=0.75, rely=0.2,
+                                                                                            anchor=CENTER)
 
         if self.interpolated_frame is not None:
-            Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.5, anchor=CENTER)
+            if self.comparison_mode:
+                if self.compare_toggle_button.config("relief")[-1] == "sunken":
+                    Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.2, anchor=CENTER)
+                else:
+                    Label(self.window, image=self.loaded_frames[self.left_frame_index+1])\
+                        .place(relx=0.5, rely=0.2, anchor=CENTER)
+            else:
+                Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.5, anchor=CENTER)
 
     def add_screen_elements(self):
         add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
@@ -68,6 +84,12 @@ class MainView:
                                    command=self.move_right_button_on_click)
         move_right_button.place(relx=0.7, rely=0.80, anchor=CENTER)
 
+        if self.comparison_mode:
+            self.compare_toggle_button = Button(self.window, text="Mostrar gerado", height=5, width=40,
+                                      command=self.compare_toggle_button_on_click,
+                                           relief="raised")
+            self.compare_toggle_button.place(relx=0.5, rely=0.4, anchor=CENTER)
+
     def add_toolbar(self):
         main_toolbar = Menu(self.window)
         self.window.config(menu=main_toolbar)
@@ -76,23 +98,40 @@ class MainView:
         main_toolbar.add_cascade(label="Importar", menu=importar_submenu)
         importar_submenu.add_command(label="Arquivos", command=self.importar_submenu_on_click)
 
+        main_toolbar.add_cascade(label="Exportar", command=self.exportar_submenu_on_click)
+
     def build_network(self):
         self.frame_network = FrameNetwork()
 
         self.frame_network.load_weights("E:\\GianAwesome\\Facultade\\outside_drive\\douga-keras-pix2pix-anime-optimizes-testbed-2400-atd12k-3.h5")
 
     def add_frame_button_on_click(self):
+        self.generate_frame()
+
+    def generate_frame(self):
         if self.loaded_original_frames is not None:
 #            gen = self.frame_network.generator.predict([[self.loaded_original_frames[self.left_frame_index]],
 #                                                       [self.loaded_original_frames[self.left_frame_index+1]]])
-            gen = self.frame_network.generator.predict([np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
-                                                        np.expand_dims(self.loaded_original_frames[self.left_frame_index+1], axis=0)])
+
+            if self.comparison_mode:
+                gen = self.frame_network.generator.predict(
+                    [np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
+                     np.expand_dims(self.loaded_original_frames[self.left_frame_index + 2], axis=0)])
+            else:
+                gen = self.frame_network.generator.predict(
+                    [np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
+                     np.expand_dims(self.loaded_original_frames[self.left_frame_index+1], axis=0)])
+
             gen = 256 * gen[0]
             gen = np.squeeze(gen, axis=-1)
 
             self.interpolated_frame = convert_cv2_image_to_imagepk(gen, flatten=True)
 
             self.paint_canvas()
+
+            if not self.comparison_mode:
+                self.loaded_original_frames = self.loaded_original_frames[:self.left_frame_index+1] + \
+                                              [gen] + self.loaded_original_frames[self.left_frame_index+1:]
 
 
     def add_all_frames_button_on_click(self):
@@ -102,16 +141,32 @@ class MainView:
         if self.loaded_frames is not None and self.left_frame_index > 0:
             self.left_frame_index -= 1
             self.interpolated_frame = None
+
+            if self.comparison_mode:
+                self.generate_frame()
+
             self.paint_canvas()
 
     def move_right_button_on_click(self):
         if self.loaded_frames is not None and self.left_frame_index < len(self.loaded_frames) - 2:
             self.left_frame_index += 1
             self.interpolated_frame = None
+
+            if self.comparison_mode:
+                self.generate_frame()
+
             self.paint_canvas()
 
+    def compare_toggle_button_on_click(self):
+        if self.compare_toggle_button.config("relief")[-1] == "sunken":
+            self.compare_toggle_button.config(relief="raised")
+        else:
+            self.compare_toggle_button.config(relief="sunken")
+
+        self.paint_canvas()
+
     def importar_submenu_on_click(self):
-        dir_name = filedialog.askdirectory(initialdir="/",
+        dir_name = filedialog.askdirectory(initialdir="E:\\GianAwesome\\Facultade\\Pesquisa\\Final Phase\\sketch_animated_by_scene",
                                            title="Escolha a pasta com os quadros")
 
         self.data_loader = DataLoader(dataset_name=os.path.dirname(dir_name),
@@ -128,6 +183,13 @@ class MainView:
         self.loaded_frames = [convert_cv2_image_to_imagepk(256 * img) for img in imgs_B]
 
         self.paint_canvas()
+
+    def exportar_submenu_on_click(self):
+        dir_name = filedialog.askdirectory(initialdir="/",
+                                           title="Escolha a pasta para salvar os quadros")
+
+        for i, frame in enumerate(self.loaded_original_frames):
+            cv2.imwrite(os.path.join(dir_name, str(i).zfill(3) + ".png"), frame)
 
     def open(self):
         self.window.mainloop()
