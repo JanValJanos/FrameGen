@@ -15,7 +15,7 @@ def convert_cv2_image_to_imagepk(img, flatten=False):
 
 
 class MainView:
-    def __init__(self, comparison_mode=False):
+    def __init__(self, comparison_mode=None):
         self.frame_network = None
         self.data_loader = None
         self.loaded_frames = None
@@ -47,35 +47,39 @@ class MainView:
         #canvas.create_rectangle(865, 150, 1180, 300)
 
         if self.loaded_frames is not None:
-            Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2, anchor=CENTER)
-            if self.comparison_mode:
+            if self.comparison_mode == "toggle":
+                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
+                                                                                          anchor=CENTER)
                 Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.2,
                                                                                               anchor=CENTER)
                 Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.2,
                                                                                               anchor=CENTER)
+            elif self.comparison_mode == "side":
+                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.17, rely=0.2,
+                                                                                          anchor=CENTER)
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.39, rely=0.2,
+                                                                                          anchor=CENTER)
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.83, rely=0.2,
+                                                                                              anchor=CENTER)
             else:
+                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
+                                                                                          anchor=CENTER)
                 Label(self.window, image=self.loaded_frames[self.left_frame_index+1]).place(relx=0.75, rely=0.2,
                                                                                             anchor=CENTER)
 
         if self.interpolated_frame is not None:
-            if self.comparison_mode:
+            if self.comparison_mode == "toggle":
                 if self.compare_toggle_button.config("relief")[-1] == "sunken":
                     Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.2, anchor=CENTER)
                 else:
                     Label(self.window, image=self.loaded_frames[self.left_frame_index+1])\
                         .place(relx=0.5, rely=0.2, anchor=CENTER)
+            elif self.comparison_mode == "side":
+                Label(self.window, image=self.interpolated_frame).place(relx=0.61, rely=0.2, anchor=CENTER)
             else:
                 Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.2, anchor=CENTER)
 
     def add_screen_elements(self):
-        add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
-                                  command=self.add_frame_button_on_click)
-        add_frame_button.place(relx=0.5, rely=0.73, anchor=CENTER)
-
-        add_all_frames_button = Button(self.window, text="Gerar quadros para todos os pares", height=5, width=40,
-                                       command=self.add_all_frames_button_on_click)
-        add_all_frames_button.place(relx=0.5, rely=0.85, anchor=CENTER)
-
         move_left_button = Button(self.window, text="<", height=5, width=5,
                                   command=self.move_left_button_on_click)
         move_left_button.place(relx=0.3, rely=0.80, anchor=CENTER)
@@ -84,11 +88,19 @@ class MainView:
                                    command=self.move_right_button_on_click)
         move_right_button.place(relx=0.7, rely=0.80, anchor=CENTER)
 
-        if self.comparison_mode:
+        if self.comparison_mode == "toggle":
             self.compare_toggle_button = Button(self.window, text="Mostrar gerado", height=5, width=40,
                                       command=self.compare_toggle_button_on_click,
                                            relief="raised")
             self.compare_toggle_button.place(relx=0.5, rely=0.4, anchor=CENTER)
+        elif not self.comparison_mode:
+            add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
+                                      command=self.add_frame_button_on_click)
+            add_frame_button.place(relx=0.5, rely=0.73, anchor=CENTER)
+
+            add_all_frames_button = Button(self.window, text="Gerar quadros para todos os pares", height=5, width=40,
+                                           command=self.add_all_frames_button_on_click)
+            add_all_frames_button.place(relx=0.5, rely=0.85, anchor=CENTER)
 
     def add_toolbar(self):
         main_toolbar = Menu(self.window)
