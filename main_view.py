@@ -53,11 +53,11 @@ class MainView:
                 Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.5,
                                                                                               anchor=CENTER)
             elif self.comparison_mode == "side":
-                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.17, rely=0.5,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.4,
                                                                                           anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.39, rely=0.5,
-                                                                                          anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.83, rely=0.5,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.2,
+                                                                                              anchor=CENTER)
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.4,
                                                                                               anchor=CENTER)
             else:
                 Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
@@ -71,7 +71,7 @@ class MainView:
                 if self.compare_toggle_button.config("relief")[-1] == "sunken":
                     self.interpolated_label.place(relx=0.5, rely=0.5, anchor=CENTER)
             elif self.comparison_mode == "side":
-                self.interpolated_label.place(relx=0.61, rely=0.5, anchor=CENTER)
+                self.interpolated_label.place(relx=0.5, rely=0.6, anchor=CENTER)
             else:
                 self.interpolated_label.place(relx=0.5, rely=0.2, anchor=CENTER)
         else:
