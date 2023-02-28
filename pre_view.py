@@ -5,7 +5,7 @@ from main_view import MainView
 class PreView:
     def __init__(self):
         self.width = 1280
-        self.height = 900
+        self.height = 720
         self.window = Tk()
         self.window.geometry(f"{self.width}x{self.height}")
         self.window.title("Gerador de quadros intermediários")
@@ -26,7 +26,7 @@ class PreView:
         #main_viewer.open()
 
     def compare_mode_button_on_click(self):
-        main_viewer = MainView(comparison_mode="toggle", original_window=self.window)
+        main_viewer = MainView(comparison_mode="side", original_window=self.window)
         #main_viewer.open()
 
     def open(self):

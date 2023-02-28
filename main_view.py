@@ -31,7 +31,7 @@ class MainView:
                 widget.destroy()
 
         self.width = 1280
-        self.height = 900
+        self.height = 720
         self.window = original_window or Tk()
         self.window.geometry(f"{self.width}x{self.height}")
         self.window.title("Gerador de quadros intermediários")
@@ -46,18 +46,18 @@ class MainView:
     def paint_canvas(self):
         if self.loaded_frames is not None:
             if self.comparison_mode == "toggle":
-                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.5,
                                                                                           anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.2,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.5,
                                                                                               anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.2,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.5,
                                                                                               anchor=CENTER)
             elif self.comparison_mode == "side":
-                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.17, rely=0.2,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.17, rely=0.5,
                                                                                           anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.39, rely=0.2,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.39, rely=0.5,
                                                                                           anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.83, rely=0.2,
+                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.83, rely=0.5,
                                                                                               anchor=CENTER)
             else:
                 Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
@@ -69,9 +69,9 @@ class MainView:
             self.interpolated_label = Label(self.window, image=self.interpolated_frame)
             if self.comparison_mode == "toggle":
                 if self.compare_toggle_button.config("relief")[-1] == "sunken":
-                    self.interpolated_label.place(relx=0.5, rely=0.2, anchor=CENTER)
+                    self.interpolated_label.place(relx=0.5, rely=0.5, anchor=CENTER)
             elif self.comparison_mode == "side":
-                self.interpolated_label.place(relx=0.61, rely=0.2, anchor=CENTER)
+                self.interpolated_label.place(relx=0.61, rely=0.5, anchor=CENTER)
             else:
                 self.interpolated_label.place(relx=0.5, rely=0.2, anchor=CENTER)
         else:
@@ -91,7 +91,7 @@ class MainView:
             self.compare_toggle_button = Button(self.window, text="Mostrar gerado", height=5, width=40,
                                       command=self.compare_toggle_button_on_click,
                                            relief="raised")
-            self.compare_toggle_button.place(relx=0.5, rely=0.4, anchor=CENTER)
+            self.compare_toggle_button.place(relx=0.5, rely=0.8, anchor=CENTER)
         elif not self.comparison_mode:
             add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
                                       command=self.add_frame_button_on_click)
@@ -196,6 +196,9 @@ class MainView:
 
         self.loaded_original_frames = imgs_B
         self.loaded_frames = [convert_cv2_image_to_imagepk(256 * img) for img in imgs_B]
+
+        if self.comparison_mode:
+            self.generate_frame()
 
         self.paint_canvas()
 
