@@ -22,6 +22,7 @@ class MainView:
         self.loaded_original_frames = None
         self.interpolated_frame = None
         self.left_frame_index = 0
+        self.interpolated_label = None
 
         self.comparison_mode = comparison_mode
 
@@ -68,16 +69,17 @@ class MainView:
                                                                                             anchor=CENTER)
 
         if self.interpolated_frame is not None:
+            self.interpolated_label = Label(self.window, image=self.interpolated_frame)
             if self.comparison_mode == "toggle":
                 if self.compare_toggle_button.config("relief")[-1] == "sunken":
-                    Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.2, anchor=CENTER)
-                else:
-                    Label(self.window, image=self.loaded_frames[self.left_frame_index+1])\
-                        .place(relx=0.5, rely=0.2, anchor=CENTER)
+                    self.interpolated_label.place(relx=0.5, rely=0.2, anchor=CENTER)
             elif self.comparison_mode == "side":
-                Label(self.window, image=self.interpolated_frame).place(relx=0.61, rely=0.2, anchor=CENTER)
+                self.interpolated_label.place(relx=0.61, rely=0.2, anchor=CENTER)
             else:
-                Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.2, anchor=CENTER)
+                self.interpolated_label.place(relx=0.5, rely=0.2, anchor=CENTER)
+        else:
+            if self.interpolated_label:
+                self.interpolated_label.destroy()
 
     def add_screen_elements(self):
         move_left_button = Button(self.window, text="<", height=5, width=5,
@@ -123,9 +125,6 @@ class MainView:
 
     def generate_frame(self):
         if self.loaded_original_frames is not None:
-#            gen = self.frame_network.generator.predict([[self.loaded_original_frames[self.left_frame_index]],
-#                                                       [self.loaded_original_frames[self.left_frame_index+1]]])
-
             if self.comparison_mode:
                 gen = self.frame_network.generator.predict(
                     [np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
@@ -195,7 +194,7 @@ class MainView:
             first_scene = scene
             break
 
-        self.imgs_A, imgs_B, self.imgs_C = self.data_loader.load_all_image_triplet(first_scene)
+        _, imgs_B, _ = self.data_loader.load_all_image_triplet(first_scene)
 
         self.loaded_original_frames = imgs_B
         self.loaded_frames = [convert_cv2_image_to_imagepk(256 * img) for img in imgs_B]
