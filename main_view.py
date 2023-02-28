@@ -15,7 +15,7 @@ def convert_cv2_image_to_imagepk(img, flatten=False):
 
 
 class MainView:
-    def __init__(self, comparison_mode=True):
+    def __init__(self, comparison_mode=False):
         self.frame_network = None
         self.data_loader = None
         self.loaded_frames = None
@@ -65,7 +65,7 @@ class MainView:
                     Label(self.window, image=self.loaded_frames[self.left_frame_index+1])\
                         .place(relx=0.5, rely=0.2, anchor=CENTER)
             else:
-                Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.5, anchor=CENTER)
+                Label(self.window, image=self.interpolated_frame).place(relx=0.5, rely=0.2, anchor=CENTER)
 
     def add_screen_elements(self):
         add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
@@ -96,9 +96,10 @@ class MainView:
 
         importar_submenu = Menu(main_toolbar)
         main_toolbar.add_cascade(label="Importar", menu=importar_submenu)
-        importar_submenu.add_command(label="Arquivos", command=self.importar_submenu_on_click)
+        importar_submenu.add_command(label="Pasta", command=self.importar_submenu_on_click)
 
-        main_toolbar.add_cascade(label="Exportar", command=self.exportar_submenu_on_click)
+        if not self.comparison_mode:
+            main_toolbar.add_cascade(label="Exportar", command=self.exportar_submenu_on_click)
 
     def build_network(self):
         self.frame_network = FrameNetwork()
@@ -122,16 +123,21 @@ class MainView:
                     [np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
                      np.expand_dims(self.loaded_original_frames[self.left_frame_index+1], axis=0)])
 
-            gen = 256 * gen[0]
+            gen = gen[0]
             gen = np.squeeze(gen, axis=-1)
 
-            self.interpolated_frame = convert_cv2_image_to_imagepk(gen, flatten=True)
+            self.interpolated_frame = convert_cv2_image_to_imagepk(256 * gen, flatten=True)
 
             self.paint_canvas()
 
             if not self.comparison_mode:
-                self.loaded_original_frames = self.loaded_original_frames[:self.left_frame_index+1] + \
-                                              [gen] + self.loaded_original_frames[self.left_frame_index+1:]
+                self.loaded_original_frames = np.concatenate([self.loaded_original_frames[:self.left_frame_index+1],
+                                                              np.expand_dims(gen, axis=0),
+                                                              self.loaded_original_frames[self.left_frame_index+1:]])
+
+                self.loaded_frames = np.concatenate([self.loaded_frames[:self.left_frame_index + 1],
+                                                              np.expand_dims(self.interpolated_frame, axis=0),
+                                                              self.loaded_frames[self.left_frame_index + 1:]])
 
 
     def add_all_frames_button_on_click(self):
@@ -188,8 +194,9 @@ class MainView:
         dir_name = filedialog.askdirectory(initialdir="/",
                                            title="Escolha a pasta para salvar os quadros")
 
-        for i, frame in enumerate(self.loaded_original_frames):
-            cv2.imwrite(os.path.join(dir_name, str(i).zfill(3) + ".png"), frame)
+        if dir_name:
+            for i, frame in enumerate(self.loaded_original_frames):
+                cv2.imwrite(os.path.join(dir_name, str(i).zfill(3) + ".png"), frame * 256)
 
     def open(self):
         self.window.mainloop()
