@@ -15,7 +15,7 @@ def convert_cv2_image_to_imagepk(img, flatten=False):
 
 
 class MainView:
-    def __init__(self, comparison_mode=None):
+    def __init__(self, comparison_mode=None, original_window=None):
         self.frame_network = None
         self.data_loader = None
         self.loaded_frames = None
@@ -26,9 +26,13 @@ class MainView:
 
         self.comparison_mode = comparison_mode
 
+        if original_window:
+            for widget in original_window.winfo_children():
+                widget.destroy()
+
         self.width = 1280
         self.height = 900
-        self.window = Tk()
+        self.window = original_window or Tk()
         self.window.geometry(f"{self.width}x{self.height}")
         self.window.title("Gerador de quadros intermediários")
 
@@ -40,13 +44,6 @@ class MainView:
         self.build_network()
 
     def paint_canvas(self):
-        #canvas = Canvas(self.window, bg='lightgray', height=self.height, width=self.width)
-        #canvas.place(relx=0, rely=0)
-
-        #canvas.create_rectangle(100, 150, 405, 300)
-        #canvas.create_rectangle(482, 300, 797, 450)
-        #canvas.create_rectangle(865, 150, 1180, 300)
-
         if self.loaded_frames is not None:
             if self.comparison_mode == "toggle":
                 Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
@@ -118,7 +115,8 @@ class MainView:
     def build_network(self):
         self.frame_network = FrameNetwork()
 
-        self.frame_network.load_weights("E:\\GianAwesome\\Facultade\\outside_drive\\douga-keras-pix2pix-anime-optimizes-testbed-2400-atd12k-3.h5")
+        self.frame_network.load_weights(
+            "E:\\GianAwesome\\Facultade\\outside_drive\\douga-keras-pix2pix-anime-optimizes-testbed-2400-atd12k-3.h5")
 
     def add_frame_button_on_click(self):
         self.generate_frame()
