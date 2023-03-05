@@ -14,6 +14,12 @@ def convert_cv2_image_to_imagepk(img, flatten=False):
     return imgtk
 
 
+class LoadedFrame:
+    def __init__(self, frame, interpolated):
+        self.frame = frame
+        self.interpolated = interpolated
+
+
 class MainView:
     def __init__(self, comparison_mode=None, original_window=None):
         self.frame_network = None
@@ -46,27 +52,27 @@ class MainView:
     def paint_canvas(self):
         if self.loaded_frames is not None:
             if self.comparison_mode == "toggle":
-                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.5,
-                                                                                          anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.5,
-                                                                                              anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.5,
-                                                                                              anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.5,
+                                                                                         anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.5,
+                                                                                             anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.5,
+                                                                                             anchor=CENTER)
             elif self.comparison_mode == "side":
-                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.4,
-                                                                                          anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.2,
-                                                                                              anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.4,
-                                                                                              anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.4,
+                                                                                         anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.2,
+                                                                                             anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.4,
+                                                                                             anchor=CENTER)
             else:
-                Label(self.window, image=self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
-                                                                                          anchor=CENTER)
-                Label(self.window, image=self.loaded_frames[self.left_frame_index+1]).place(relx=0.75, rely=0.2,
-                                                                                            anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
+                                                                                         anchor=CENTER)
+                self.create_frame_label(self.loaded_frames[self.left_frame_index + 1]).place(relx=0.75, rely=0.2,
+                                                                                             anchor=CENTER)
 
         if self.interpolated_frame is not None:
-            self.interpolated_label = Label(self.window, image=self.interpolated_frame)
+            self.interpolated_label = self.create_frame_label(self.interpolated_frame)
             if self.comparison_mode == "toggle":
                 if self.compare_toggle_button.config("relief")[-1] == "sunken":
                     self.interpolated_label.place(relx=0.5, rely=0.5, anchor=CENTER)
@@ -77,6 +83,10 @@ class MainView:
         else:
             if self.interpolated_label:
                 self.interpolated_label.destroy()
+
+    def create_frame_label(self, loaded_frame):
+        color = "#37d3ff" if loaded_frame.interpolated else "#000000"
+        return Label(self.window, image=loaded_frame.frame, highlightthickness=4, highlightbackground=color)
 
     def add_screen_elements(self):
         move_left_button = Button(self.window, text="<", height=5, width=5,
@@ -89,8 +99,8 @@ class MainView:
 
         if self.comparison_mode == "toggle":
             self.compare_toggle_button = Button(self.window, text="Mostrar gerado", height=5, width=40,
-                                      command=self.compare_toggle_button_on_click,
-                                           relief="raised")
+                                                command=self.compare_toggle_button_on_click,
+                                                relief="raised")
             self.compare_toggle_button.place(relx=0.5, rely=0.8, anchor=CENTER)
         elif not self.comparison_mode:
             add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
@@ -130,24 +140,22 @@ class MainView:
             else:
                 gen = self.frame_network.generator.predict(
                     [np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
-                     np.expand_dims(self.loaded_original_frames[self.left_frame_index+1], axis=0)])
+                     np.expand_dims(self.loaded_original_frames[self.left_frame_index + 1], axis=0)])
 
             gen = gen[0]
             gen = np.squeeze(gen, axis=-1)
 
-            self.interpolated_frame = convert_cv2_image_to_imagepk(256 * gen, flatten=True)
+            self.interpolated_frame = LoadedFrame(convert_cv2_image_to_imagepk(256 * gen, flatten=True), True)
 
             self.paint_canvas()
 
             if not self.comparison_mode:
-                self.loaded_original_frames = np.concatenate([self.loaded_original_frames[:self.left_frame_index+1],
+                self.loaded_original_frames = np.concatenate([self.loaded_original_frames[:self.left_frame_index + 1],
                                                               np.expand_dims(gen, axis=0),
-                                                              self.loaded_original_frames[self.left_frame_index+1:]])
+                                                              self.loaded_original_frames[self.left_frame_index + 1:]])
 
-                self.loaded_frames = np.concatenate([self.loaded_frames[:self.left_frame_index + 1],
-                                                              np.expand_dims(self.interpolated_frame, axis=0),
-                                                              self.loaded_frames[self.left_frame_index + 1:]])
-
+                self.loaded_frames = self.loaded_frames[:self.left_frame_index + 1] + [
+                    self.interpolated_frame] + self.loaded_frames[self.left_frame_index + 1:]
 
     def add_all_frames_button_on_click(self):
         pass
@@ -181,8 +189,9 @@ class MainView:
         self.paint_canvas()
 
     def importar_submenu_on_click(self):
-        dir_name = filedialog.askdirectory(initialdir="E:\\GianAwesome\\Facultade\\Pesquisa\\Final Phase\\sketch_animated_by_scene",
-                                           title="Escolha a pasta com os quadros")
+        dir_name = filedialog.askdirectory(
+            initialdir="E:\\GianAwesome\\Facultade\\Pesquisa\\Final Phase\\sketch_animated_by_scene",
+            title="Escolha a pasta com os quadros")
 
         self.data_loader = DataLoader(dataset_name=os.path.dirname(dir_name),
                                       img_res=(self.frame_network.img_rows, self.frame_network.img_cols),
@@ -195,7 +204,7 @@ class MainView:
         _, imgs_B, _ = self.data_loader.load_all_image_triplet(first_scene)
 
         self.loaded_original_frames = imgs_B
-        self.loaded_frames = [convert_cv2_image_to_imagepk(256 * img) for img in imgs_B]
+        self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), False) for img in imgs_B]
 
         if self.comparison_mode:
             self.generate_frame()
