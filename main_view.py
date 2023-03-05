@@ -224,7 +224,8 @@ class MainView:
                     prev_original_index = loaded_frame.name
                     name = str(prev_original_index).zfill(number_of_digits) + ".png"
                 else:
-                    name = f"{str(prev_original_index).zfill(number_of_digits)}-{str(loaded_frame.name).zfill(number_of_digits)}.png"
+                    name = str(prev_original_index).zfill(number_of_digits) + "-" + str(loaded_frame.name).zfill(
+                        number_of_digits) + ".png"
 
                 cv2.imwrite(os.path.join(dir_name, name), loaded_frame.original_frame * 256)
 
