@@ -2,6 +2,7 @@ from tkinter import Tk, Button, Canvas, Menu, CENTER, filedialog, Label, message
 from FrameNetwork import FrameNetwork
 from DataLoader import DataLoader
 import os
+import math
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
@@ -15,10 +16,11 @@ def convert_cv2_image_to_imagepk(img, flatten=False):
 
 
 class LoadedFrame:
-    def __init__(self, frame, original_frame, interpolated):
+    def __init__(self, frame, original_frame, name, interpolated):
         self.frame = frame
         self.original_frame = original_frame
         self.interpolated = interpolated
+        self.name = name
 
 
 class MainView:
@@ -145,7 +147,9 @@ class MainView:
             gen = gen[0]
             gen = np.squeeze(gen, axis=-1)
 
-            self.interpolated_frame = LoadedFrame(convert_cv2_image_to_imagepk(256 * gen, flatten=True), gen, True)
+            prev_frame = self.loaded_frames[self.left_frame_index]
+            name = prev_frame.name + 1 if prev_frame.interpolated else 0
+            self.interpolated_frame = LoadedFrame(convert_cv2_image_to_imagepk(256 * gen, flatten=True), gen, name, True)
 
             self.paint_canvas()
 
@@ -200,7 +204,8 @@ class MainView:
 
             _, imgs_B, _ = self.data_loader.load_all_image_triplet(first_scene)
 
-            self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), img, False) for img in imgs_B]
+            self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), img, i, False) for
+                                  i, img in enumerate(imgs_B)]
 
             if self.comparison_mode:
                 self.generate_frame()
@@ -212,16 +217,14 @@ class MainView:
                                            title="Escolha a pasta para salvar os quadros")
 
         if dir_name:
-            prev_original_index = -1
-            prev_interp_index = -1
+            prev_original_index = 0
+            number_of_digits = int(math.log10(len(self.loaded_frames))) + 1
             for i, loaded_frame in enumerate(self.loaded_frames):
                 if not loaded_frame.interpolated:
-                    prev_original_index += 1
-                    prev_interp_index = -1
-                    name = str(prev_original_index).zfill(3) + ".png"
+                    prev_original_index = loaded_frame.name
+                    name = str(prev_original_index).zfill(number_of_digits) + ".png"
                 else:
-                    prev_interp_index += 1
-                    name = f"{str(prev_original_index).zfill(3)}-{str(prev_interp_index).zfill(3)}.png"
+                    name = f"{str(prev_original_index).zfill(number_of_digits)}-{str(loaded_frame.name).zfill(number_of_digits)}.png"
 
                 cv2.imwrite(os.path.join(dir_name, name), loaded_frame.original_frame * 256)
 
