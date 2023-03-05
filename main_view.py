@@ -15,8 +15,9 @@ def convert_cv2_image_to_imagepk(img, flatten=False):
 
 
 class LoadedFrame:
-    def __init__(self, frame, interpolated):
+    def __init__(self, frame, original_frame, interpolated):
         self.frame = frame
+        self.original_frame = original_frame
         self.interpolated = interpolated
 
 
@@ -25,7 +26,6 @@ class MainView:
         self.frame_network = None
         self.data_loader = None
         self.loaded_frames = None
-        self.loaded_original_frames = None
         self.interpolated_frame = None
         self.left_frame_index = 0
         self.interpolated_label = None
@@ -132,28 +132,24 @@ class MainView:
         self.generate_frame()
 
     def generate_frame(self):
-        if self.loaded_original_frames is not None:
+        if self.loaded_frames is not None:
             if self.comparison_mode:
                 gen = self.frame_network.generator.predict(
-                    [np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
-                     np.expand_dims(self.loaded_original_frames[self.left_frame_index + 2], axis=0)])
+                    [np.expand_dims(self.loaded_frames[self.left_frame_index].original_frame, axis=0),
+                     np.expand_dims(self.loaded_frames[self.left_frame_index + 2].original_frame, axis=0)])
             else:
                 gen = self.frame_network.generator.predict(
-                    [np.expand_dims(self.loaded_original_frames[self.left_frame_index], axis=0),
-                     np.expand_dims(self.loaded_original_frames[self.left_frame_index + 1], axis=0)])
+                    [np.expand_dims(self.loaded_frames[self.left_frame_index].original_frame, axis=0),
+                     np.expand_dims(self.loaded_frames[self.left_frame_index + 1].original_frame, axis=0)])
 
             gen = gen[0]
             gen = np.squeeze(gen, axis=-1)
 
-            self.interpolated_frame = LoadedFrame(convert_cv2_image_to_imagepk(256 * gen, flatten=True), True)
+            self.interpolated_frame = LoadedFrame(convert_cv2_image_to_imagepk(256 * gen, flatten=True), gen, True)
 
             self.paint_canvas()
 
             if not self.comparison_mode:
-                self.loaded_original_frames = np.concatenate([self.loaded_original_frames[:self.left_frame_index + 1],
-                                                              np.expand_dims(gen, axis=0),
-                                                              self.loaded_original_frames[self.left_frame_index + 1:]])
-
                 self.loaded_frames = self.loaded_frames[:self.left_frame_index + 1] + [
                     self.interpolated_frame] + self.loaded_frames[self.left_frame_index + 1:]
 
@@ -203,8 +199,7 @@ class MainView:
 
         _, imgs_B, _ = self.data_loader.load_all_image_triplet(first_scene)
 
-        self.loaded_original_frames = imgs_B
-        self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), False) for img in imgs_B]
+        self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), img, False) for img in imgs_B]
 
         if self.comparison_mode:
             self.generate_frame()
@@ -216,8 +211,8 @@ class MainView:
                                            title="Escolha a pasta para salvar os quadros")
 
         if dir_name:
-            for i, frame in enumerate(self.loaded_original_frames):
-                cv2.imwrite(os.path.join(dir_name, str(i).zfill(3) + ".png"), frame * 256)
+            for i, loaded_frame in enumerate(self.loaded_frames):
+                cv2.imwrite(os.path.join(dir_name, str(i).zfill(3) + ".png"), loaded_frame.original_frame * 256)
 
     def open(self):
         self.window.mainloop()
