@@ -189,30 +189,43 @@ class MainView:
             initialdir="E:\\GianAwesome\\Facultade\\Pesquisa\\Final Phase\\sketch_animated_by_scene",
             title="Escolha a pasta com os quadros")
 
-        self.data_loader = DataLoader(dataset_name=os.path.dirname(dir_name),
-                                      img_res=(self.frame_network.img_rows, self.frame_network.img_cols),
-                                      root_dir=dir_name)
+        if dir_name:
+            self.data_loader = DataLoader(dataset_name=os.path.dirname(dir_name),
+                                          img_res=(self.frame_network.img_rows, self.frame_network.img_cols),
+                                          root_dir=dir_name)
 
-        for scene in sorted(os.listdir(dir_name)):
-            first_scene = scene
-            break
+            for scene in sorted(os.listdir(dir_name)):
+                first_scene = scene
+                break
 
-        _, imgs_B, _ = self.data_loader.load_all_image_triplet(first_scene)
+            _, imgs_B, _ = self.data_loader.load_all_image_triplet(first_scene)
 
-        self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), img, False) for img in imgs_B]
+            self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), img, False) for img in imgs_B]
 
-        if self.comparison_mode:
-            self.generate_frame()
+            if self.comparison_mode:
+                self.generate_frame()
 
-        self.paint_canvas()
+            self.paint_canvas()
 
     def exportar_submenu_on_click(self):
         dir_name = filedialog.askdirectory(initialdir="/",
                                            title="Escolha a pasta para salvar os quadros")
 
         if dir_name:
+            prev_original_index = -1
+            prev_interp_index = -1
             for i, loaded_frame in enumerate(self.loaded_frames):
-                cv2.imwrite(os.path.join(dir_name, str(i).zfill(3) + ".png"), loaded_frame.original_frame * 256)
+                if not loaded_frame.interpolated:
+                    prev_original_index += 1
+                    prev_interp_index = -1
+                    name = str(prev_original_index).zfill(3) + ".png"
+                else:
+                    prev_interp_index += 1
+                    name = f"{str(prev_original_index).zfill(3)}-{str(prev_interp_index).zfill(3)}.png"
+
+                cv2.imwrite(os.path.join(dir_name, name), loaded_frame.original_frame * 256)
+
+            os.startfile(dir_name)
 
     def open(self):
         self.window.mainloop()
