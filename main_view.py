@@ -54,24 +54,16 @@ class MainView:
     def paint_canvas(self):
         if self.loaded_frames is not None:
             if self.comparison_mode == "toggle":
-                self.create_frame_label(self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.5,
-                                                                                         anchor=CENTER)
-                self.create_frame_label(self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.5,
-                                                                                             anchor=CENTER)
-                self.create_frame_label(self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.5,
-                                                                                             anchor=CENTER)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index], relx=0.25, rely=0.5)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index + 1], relx=0.5, rely=0.5)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index + 2], relx=0.75, rely=0.5)
             elif self.comparison_mode == "side":
-                self.create_frame_label(self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.4,
-                                                                                         anchor=CENTER)
-                self.create_frame_label(self.loaded_frames[self.left_frame_index + 1]).place(relx=0.5, rely=0.2,
-                                                                                             anchor=CENTER)
-                self.create_frame_label(self.loaded_frames[self.left_frame_index + 2]).place(relx=0.75, rely=0.4,
-                                                                                             anchor=CENTER)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index], relx=0.25, rely=0.4)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index + 1], relx=0.5, rely=0.2)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index + 2], relx=0.75, rely=0.4)
             else:
-                self.create_frame_label(self.loaded_frames[self.left_frame_index]).place(relx=0.25, rely=0.2,
-                                                                                         anchor=CENTER)
-                self.create_frame_label(self.loaded_frames[self.left_frame_index + 1]).place(relx=0.75, rely=0.2,
-                                                                                             anchor=CENTER)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index], relx=0.25, rely=0.2)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index + 1], relx=0.75, rely=0.2)
 
         if self.interpolated_frame is not None:
             self.interpolated_label = self.create_frame_label(self.interpolated_frame)
@@ -89,6 +81,14 @@ class MainView:
     def create_frame_label(self, loaded_frame):
         color = "#37d3ff" if loaded_frame.interpolated else "#000000"
         return Label(self.window, image=loaded_frame.frame, highlightthickness=4, highlightbackground=color)
+
+    def place_frame_label(self, loaded_frame, relx=0, rely=0, anchor=CENTER):
+        color = "#37d3ff" if loaded_frame.interpolated else "#000000"
+        label = self.create_frame_label(loaded_frame)
+        label.place(relx=relx, rely=rely, anchor=anchor)
+
+        Label(self.window, text=loaded_frame.name).place(relx=relx, rely=rely+0.2, anchor=anchor)
+
 
     def add_screen_elements(self):
         move_left_button = Button(self.window, text="<", height=5, width=5,
