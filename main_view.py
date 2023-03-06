@@ -1,4 +1,4 @@
-from tkinter import Tk, Button, Canvas, Menu, CENTER, filedialog, Label, messagebox
+from tkinter import Tk, Button, Canvas, Menu, CENTER, filedialog, Label, messagebox, Frame
 from FrameNetwork import FrameNetwork
 from DataLoader import DataLoader
 import os
@@ -59,7 +59,7 @@ class MainView:
                 self.place_frame_label(self.loaded_frames[self.left_frame_index + 2], relx=0.75, rely=0.5)
             elif self.comparison_mode == "side":
                 self.place_frame_label(self.loaded_frames[self.left_frame_index], relx=0.25, rely=0.4)
-                self.place_frame_label(self.loaded_frames[self.left_frame_index + 1], relx=0.5, rely=0.2)
+                self.place_frame_label(self.loaded_frames[self.left_frame_index + 1], relx=0.5, rely=0.6)
                 self.place_frame_label(self.loaded_frames[self.left_frame_index + 2], relx=0.75, rely=0.4)
             else:
                 self.place_frame_label(self.loaded_frames[self.left_frame_index], relx=0.25, rely=0.2)
@@ -71,7 +71,7 @@ class MainView:
                 if self.compare_toggle_button.config("relief")[-1] == "sunken":
                     self.interpolated_label.place(relx=0.5, rely=0.5, anchor=CENTER)
             elif self.comparison_mode == "side":
-                self.interpolated_label.place(relx=0.5, rely=0.6, anchor=CENTER)
+                self.interpolated_label.place(relx=0.5, rely=0.2, anchor=CENTER)
             else:
                 self.interpolated_label.place(relx=0.5, rely=0.2, anchor=CENTER)
         else:
@@ -80,15 +80,18 @@ class MainView:
 
     def create_frame_label(self, loaded_frame):
         color = "#37d3ff" if loaded_frame.interpolated else "#000000"
-        return Label(self.window, image=loaded_frame.frame, highlightthickness=4, highlightbackground=color)
+        border_frame = Frame(self.window, background=color)
+
+        label = Label(border_frame, image=loaded_frame.frame)
+        label.pack(padx=3, pady=3)
+
+        return border_frame
 
     def place_frame_label(self, loaded_frame, relx=0, rely=0, anchor=CENTER):
-        color = "#37d3ff" if loaded_frame.interpolated else "#000000"
         label = self.create_frame_label(loaded_frame)
         label.place(relx=relx, rely=rely, anchor=anchor)
 
-        Label(self.window, text=loaded_frame.name).place(relx=relx, rely=rely+0.2, anchor=anchor)
-
+        Label(self.window, text=loaded_frame.name).place(relx=relx, rely=rely+0.21, anchor=anchor)
 
     def add_screen_elements(self):
         move_left_button = Button(self.window, text="<", height=5, width=5,

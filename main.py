@@ -7,7 +7,6 @@ from pre_view import PreView
 
 
 def main():
-    #window = MainView()
     window = PreView()
     window.open()
 
