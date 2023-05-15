@@ -160,6 +160,11 @@ class MainView:
                 self.loaded_frames = self.loaded_frames[:self.left_frame_index + 1] + [
                     self.interpolated_frame] + self.loaded_frames[self.left_frame_index + 1:]
 
+                i = self.left_frame_index + 2
+                while self.loaded_frames[i].interpolated:
+                    self.loaded_frames[i].name += 1
+                    i += 1
+
     def add_all_frames_button_on_click(self):
         pass
 
