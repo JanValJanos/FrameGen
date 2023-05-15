@@ -31,6 +31,7 @@ class MainView:
         self.interpolated_frame = None
         self.left_frame_index = 0
         self.interpolated_label = None
+        self.generated_frames = {}
 
         self.comparison_mode = comparison_mode
 
@@ -78,6 +79,12 @@ class MainView:
             if self.interpolated_label:
                 self.interpolated_label.destroy()
 
+    def place_frame_label(self, loaded_frame, relx=0, rely=0, anchor=CENTER):
+        label = self.create_frame_label(loaded_frame)
+        label.place(relx=relx, rely=rely, anchor=anchor)
+
+        Label(self.window, text=loaded_frame.name).place(relx=relx, rely=rely+0.21, anchor=anchor)
+
     def create_frame_label(self, loaded_frame):
         color = "#37d3ff" if loaded_frame.interpolated else "#000000"
         border_frame = Frame(self.window, background=color)
@@ -86,12 +93,6 @@ class MainView:
         label.pack(padx=3, pady=3)
 
         return border_frame
-
-    def place_frame_label(self, loaded_frame, relx=0, rely=0, anchor=CENTER):
-        label = self.create_frame_label(loaded_frame)
-        label.place(relx=relx, rely=rely, anchor=anchor)
-
-        Label(self.window, text=loaded_frame.name).place(relx=relx, rely=rely+0.21, anchor=anchor)
 
     def add_screen_elements(self):
         move_left_button = Button(self.window, text="<", height=5, width=5,
@@ -138,21 +139,28 @@ class MainView:
 
     def generate_frame(self):
         if self.loaded_frames is not None:
-            if self.comparison_mode:
-                gen = self.frame_network.generator.predict(
-                    [np.expand_dims(self.loaded_frames[self.left_frame_index].original_frame, axis=0),
-                     np.expand_dims(self.loaded_frames[self.left_frame_index + 2].original_frame, axis=0)])
+            if self.comparison_mode and self.left_frame_index in self.generated_frames:
+                self.interpolated_frame = self.generated_frames[self.left_frame_index]
             else:
-                gen = self.frame_network.generator.predict(
-                    [np.expand_dims(self.loaded_frames[self.left_frame_index].original_frame, axis=0),
-                     np.expand_dims(self.loaded_frames[self.left_frame_index + 1].original_frame, axis=0)])
+                if self.comparison_mode:
+                    gen = self.frame_network.generator.predict(
+                        [np.expand_dims(self.loaded_frames[self.left_frame_index].original_frame, axis=0),
+                         np.expand_dims(self.loaded_frames[self.left_frame_index + 2].original_frame, axis=0)])
+                else:
+                    gen = self.frame_network.generator.predict(
+                        [np.expand_dims(self.loaded_frames[self.left_frame_index].original_frame, axis=0),
+                         np.expand_dims(self.loaded_frames[self.left_frame_index + 1].original_frame, axis=0)])
 
-            gen = gen[0]
-            gen = np.squeeze(gen, axis=-1)
+                gen = gen[0]
+                gen = np.squeeze(gen, axis=-1)
 
-            prev_frame = self.loaded_frames[self.left_frame_index]
-            name = prev_frame.name + 1 if prev_frame.interpolated else 0
-            self.interpolated_frame = LoadedFrame(convert_cv2_image_to_imagepk(256 * gen, flatten=True), gen, name, True)
+                prev_frame = self.loaded_frames[self.left_frame_index]
+                name = prev_frame.name + 1 if prev_frame.interpolated else 0
+                gen = LoadedFrame(convert_cv2_image_to_imagepk(256 * gen, flatten=True), gen, name, True)
+                self.interpolated_frame = gen
+
+                if self.comparison_mode:
+                    self.generated_frames[self.left_frame_index] = gen
 
             self.paint_canvas()
 
