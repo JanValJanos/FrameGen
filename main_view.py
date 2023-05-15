@@ -2,10 +2,12 @@ from tkinter import Tk, Button, Canvas, Menu, CENTER, filedialog, Label, message
 from FrameNetwork import FrameNetwork
 from DataLoader import DataLoader
 import os
+import time
 import math
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
+from preview_view import PreviewView
 
 
 def convert_cv2_image_to_imagepk(img, flatten=False):
@@ -113,9 +115,13 @@ class MainView:
                                       command=self.add_frame_button_on_click)
             add_frame_button.place(relx=0.5, rely=0.73, anchor=CENTER)
 
-            add_all_frames_button = Button(self.window, text="Gerar quadros para todos os pares", height=5, width=40,
-                                           command=self.add_all_frames_button_on_click)
-            add_all_frames_button.place(relx=0.5, rely=0.85, anchor=CENTER)
+            #add_all_frames_button = Button(self.window, text="Gerar quadros para todos os pares", height=5, width=40,
+            #                               command=self.add_all_frames_button_on_click)
+            #add_all_frames_button.place(relx=0.5, rely=0.85, anchor=CENTER)
+
+            preview_button = Button(self.window, text="Prever animação", height=5, width=40,
+                                           command=self.preview_button_on_click)
+            preview_button.place(relx=0.5, rely=0.85, anchor=CENTER)
 
     def add_toolbar(self):
         main_toolbar = Menu(self.window)
@@ -175,6 +181,9 @@ class MainView:
 
     def add_all_frames_button_on_click(self):
         pass
+
+    def preview_button_on_click(self):
+        preview_view = PreviewView(self.loaded_frames, master=self.window)
 
     def move_left_button_on_click(self):
         if self.loaded_frames is not None and self.left_frame_index > 0:
