@@ -21,7 +21,7 @@ class PreviewView(Toplevel):
     def show_animation(self):
         if self.loaded_frames is not None:
             for i in range(len(self.loaded_frames)):
-                self.after(150 * i, self.show_frame)
+                self.after(80 * i, self.show_frame)
 
     def show_frame(self):
         print(self.cur_frame)
