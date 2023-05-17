@@ -8,16 +8,16 @@ class PreView:
         self.height = 720
         self.window = Tk()
         self.window.geometry(f"{self.width}x{self.height}")
-        self.window.title("Gerador de quadros intermediários")
+        self.window.title("Inbetween frame generator")
 
         self.add_screen_elements()
 
     def add_screen_elements(self):
-        generation_mode_button = Button(self.window, text="Geração", height=5, width=40,
+        generation_mode_button = Button(self.window, text="Generation", height=5, width=40,
                                   command=self.generation_mode_button_on_click)
         generation_mode_button.place(relx=0.5, rely=0.4, anchor=CENTER)
 
-        compare_mode_button = Button(self.window, text="Comparação", height=5, width=40,
+        compare_mode_button = Button(self.window, text="Comparison", height=5, width=40,
                                        command=self.compare_mode_button_on_click)
         compare_mode_button.place(relx=0.5, rely=0.6, anchor=CENTER)
 

@@ -12,7 +12,7 @@ class PreviewView(Toplevel):
         super().__init__(master=master)
 
         self.geometry(f"{self.width}x{self.height}")
-        self.title("Gerador de quadros intermediários")
+        self.title("Inbetween frame generator")
 
         play_button = Button(self, text="Play", height=5, width=20,
                                   command=self.show_animation)

@@ -45,7 +45,7 @@ class MainView:
         self.height = 720
         self.window = original_window or Tk()
         self.window.geometry(f"{self.width}x{self.height}")
-        self.window.title("Gerador de quadros intermediários")
+        self.window.title("Inbetween frame generator")
 
         self.paint_canvas()
 
@@ -106,12 +106,12 @@ class MainView:
         move_right_button.place(relx=0.7, rely=0.80, anchor=CENTER)
 
         if self.comparison_mode == "toggle":
-            self.compare_toggle_button = Button(self.window, text="Mostrar gerado", height=5, width=40,
+            self.compare_toggle_button = Button(self.window, text="Display generated", height=5, width=40,
                                                 command=self.compare_toggle_button_on_click,
                                                 relief="raised")
             self.compare_toggle_button.place(relx=0.5, rely=0.8, anchor=CENTER)
         elif not self.comparison_mode:
-            add_frame_button = Button(self.window, text="Gerar quadro", height=5, width=40,
+            add_frame_button = Button(self.window, text="Generate frame", height=5, width=40,
                                       command=self.add_frame_button_on_click)
             add_frame_button.place(relx=0.5, rely=0.73, anchor=CENTER)
 
@@ -119,7 +119,7 @@ class MainView:
             #                               command=self.add_all_frames_button_on_click)
             #add_all_frames_button.place(relx=0.5, rely=0.85, anchor=CENTER)
 
-            preview_button = Button(self.window, text="Prever animação", height=5, width=40,
+            preview_button = Button(self.window, text="Preview animation", height=5, width=40,
                                            command=self.preview_button_on_click)
             preview_button.place(relx=0.5, rely=0.85, anchor=CENTER)
 
@@ -128,11 +128,11 @@ class MainView:
         self.window.config(menu=main_toolbar)
 
         importar_submenu = Menu(main_toolbar)
-        main_toolbar.add_cascade(label="Importar", menu=importar_submenu)
-        importar_submenu.add_command(label="Pasta", command=self.importar_submenu_on_click)
+        main_toolbar.add_cascade(label="Import", menu=importar_submenu)
+        importar_submenu.add_command(label="Folder", command=self.importar_submenu_on_click)
 
         if not self.comparison_mode:
-            main_toolbar.add_cascade(label="Exportar", command=self.exportar_submenu_on_click)
+            main_toolbar.add_cascade(label="Export", command=self.exportar_submenu_on_click)
 
     def build_network(self):
         self.frame_network = FrameNetwork()
@@ -216,7 +216,7 @@ class MainView:
     def importar_submenu_on_click(self):
         dir_name = filedialog.askdirectory(
             initialdir="E:\\GianAwesome\\Facultade\\Pesquisa\\Final Phase\\sketch_animated_by_scene",
-            title="Escolha a pasta com os quadros")
+            title="Choose the frame folder")
 
         if dir_name:
             self.data_loader = DataLoader(dataset_name=os.path.dirname(dir_name),
@@ -239,7 +239,7 @@ class MainView:
 
     def exportar_submenu_on_click(self):
         dir_name = filedialog.askdirectory(initialdir="/",
-                                           title="Escolha a pasta para salvar os quadros")
+                                           title="Choose the folder to save the frames")
 
         if dir_name:
             prev_original_index = 0
