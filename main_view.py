@@ -223,11 +223,7 @@ class MainView:
                                           img_res=(self.frame_network.img_rows, self.frame_network.img_cols),
                                           root_dir=dir_name)
 
-            for scene in sorted(os.listdir(dir_name)):
-                first_scene = scene
-                break
-
-            _, imgs_B, _ = self.data_loader.load_all_image_triplet(first_scene)
+            _, imgs_B, _ = self.data_loader.load_all_image_triplet()
 
             self.loaded_frames = [LoadedFrame(convert_cv2_image_to_imagepk(256 * img), img, i, False) for
                                   i, img in enumerate(imgs_B)]

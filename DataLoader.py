@@ -16,11 +16,11 @@ class DataLoader():
 
         dirs = []
         n_files = []
-        for dir in sorted(os.listdir(self.root_dir)):
-            dir_path = os.path.join(self.root_dir, dir)
-            if not os.path.isfile(dir_path):
-                dirs.append(dir)
-                n_files.append(len([filename for filename in os.listdir(dir_path)]))
+
+        dir_path = self.root_dir
+        if not os.path.isfile(dir_path):
+            dirs.append(dir)
+            n_files.append(len([filename for filename in os.listdir(dir_path)]))
 
         ### Para teste
         ### Pegando apenas metade dos diretórios
@@ -48,9 +48,9 @@ class DataLoader():
             return imgs
         return [cv2.flip(img, flip - 2) for img in imgs]
 
-    def load_image_triplet(self, src_dir, normalize=True, augment=False):
+    def load_image_triplet(self, normalize=True, augment=False):
 
-        base_dir = os.path.join(self.root_dir, src_dir)
+        base_dir = self.root_dir
 
         sampled_files = [filename for filename in sorted(os.listdir(base_dir))]
 
@@ -66,9 +66,9 @@ class DataLoader():
 
         return imgs
 
-    def load_all_image_triplet(self, src_dir, normalize=True, augment=False):
+    def load_all_image_triplet(self, normalize=True, augment=False):
 
-        base_dir = os.path.join(self.root_dir, src_dir)
+        base_dir = self.root_dir
 
         sampled_files = [filename for filename in sorted(os.listdir(base_dir)) if
                          filename.endswith(".png") or filename.endswith(".jpg")]
@@ -92,9 +92,9 @@ class DataLoader():
 
         return img_A, img_B, img_C
 
-    def load_halfway_image_triplet(self, src_dir, normalize=True, augment=False):
+    def load_halfway_image_triplet(self, normalize=True, augment=False):
 
-        base_dir = os.path.join(self.root_dir, src_dir)
+        base_dir = self.root_dir
 
         sampled_files = [filename for filename in sorted(os.listdir(base_dir))]
 
